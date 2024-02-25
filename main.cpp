@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     while(count++ < 5) {
         sensor->getTemperature(temp);
         sensor1->getTemperature(temp1);
-        std::cout << "Temperature " << temp << "ᵒC "<<  " fake temp " << temp1 << std::endl;
+        std::cout << "Temperature " << temp << "ᵒC" <<  " fake temp " << temp1 << "ᵒC" << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     delete sensor;

@@ -52,7 +52,7 @@ bool fakeSensor::getTemperature(double &t)
             mTemperature = mMin + 1;
         }
     }
-    t = (int)mTemperature;
+    t = (double)mTemperature;
     return true;
 }
 
