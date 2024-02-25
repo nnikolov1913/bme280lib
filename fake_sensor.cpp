@@ -11,7 +11,6 @@ fakeSensor::fakeSensor(): mOpened(false)
     mTemperature = 20;
     mInc = true;
     std::cout << "fakeSensor constructor" << std::endl;
-    open();
 }
 
 fakeSensor::~fakeSensor()

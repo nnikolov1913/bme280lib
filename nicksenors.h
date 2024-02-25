@@ -17,6 +17,12 @@ class NickSensors
         //If true is returned, measured temperature is in t
         bool getTemperature(double &t);
 
+        //Opens the sensor for getting the temperature. Must be called before getting the temperature
+        bool openSensor();
+
+        //Closes the sensor. Optional.
+        void closeSensor();
+
         /*
         Sets threshold value t
         thresh - direction of the threshold (above or below t) 

@@ -9,7 +9,6 @@ using namespace druksensor;
 i2cBME280::i2cBME280(): mOpened(false)
 {
     std::cout << "BME280 I2C constructor" << std::endl;
-    open();
 }
 
 i2cBME280::~i2cBME280()

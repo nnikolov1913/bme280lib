@@ -36,7 +36,24 @@ NickSensors::~NickSensors()
     }
 }
 
-bool NickSensors::getTemperature(double &t) {
+bool NickSensors::openSensor()
+{
+    if (mSensor == nullptr) {
+        return false;
+    }
+
+    return mSensor->open();
+}
+
+void NickSensors::closeSensor()
+{
+    if (mSensor != nullptr) {
+        mSensor->close();
+    }
+}
+
+bool NickSensors::getTemperature(double &t)
+{
     if (mSensor == nullptr) {
         return false;
     }
@@ -44,7 +61,8 @@ bool NickSensors::getTemperature(double &t) {
     return mSensor->getTemperature(t);
 }
 
-void NickSensors::setThreshold(double t, IDrukSensor::ThresholdDir thresh, std::function<void(void *, double t)> callback, void *data) {
+void NickSensors::setThreshold(double t, IDrukSensor::ThresholdDir thresh, std::function<void(void *, double t)> callback, void *data)
+{
     //TODO wait till thread start, lock
     if (mSensor == nullptr) {
         return;
@@ -61,7 +79,8 @@ void NickSensors::setThreshold(double t, IDrukSensor::ThresholdDir thresh, std::
     mThread = std::thread(&NickSensors::thresholdThread, this);
 }
 
-void NickSensors::thresholdThread() {
+void NickSensors::thresholdThread()
+{
     double t;
     std::cout << "Thread started for sensor type " << mType << std::endl;
     while (mExit.load() == true) {
