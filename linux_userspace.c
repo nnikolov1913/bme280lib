@@ -168,7 +168,7 @@ int bme280_main(const char* devname)
         }
 
         /* Make sure to select BME280_I2C_ADDR_PRIM or BME280_I2C_ADDR_SEC as needed */
-        id.dev_addr = BME280_I2C_ADDR_SEC;
+        id.dev_addr = BME280_I2C_ADDR_PRIM;
 #ifdef __KERNEL__IFACE
         if (ioctl(id.fd, I2C_SLAVE, id.dev_addr) < 0)
         {
