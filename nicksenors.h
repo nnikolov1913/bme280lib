@@ -1,6 +1,7 @@
 #include <thread>
 #include <atomic>
 #include <functional>
+#include <mutex>
 #include "IDrukSensor.h"
 
 namespace druksensor {
@@ -29,8 +30,9 @@ class NickSensors
         callback and data for the alarm when temperature goes above/below t
         */
         void setThreshold(double t, IDrukSensor::ThresholdDir thresh, std::function<void(void *, double t)> callback, void *data);
-        //TODO
-        //removeThreshold
+
+        //removes the threshold alarm set by the setThreshold
+        void removeThreshold();
 
     private:
         IDrukSensor::SensorType mType;
@@ -42,7 +44,8 @@ class NickSensors
         void *mData;                                        //Callback data from the caller
         double mThreshold;                          //Threshold value to check against
         IDrukSensor::ThresholdDir mThreshDir;       //Theshold direction to get alarm above or below depending on mThreshold
-        //TODO mutex condition
+        std::mutex mMutex;
+        void exitThread();
 };
 
 }

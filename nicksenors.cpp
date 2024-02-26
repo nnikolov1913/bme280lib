@@ -27,10 +27,9 @@ NickSensors::NickSensors(IDrukSensor::SensorType type)
 NickSensors::~NickSensors()
 {
     std::cout << "Library destructor" << std::endl;
-    if (mExit.load() == true) {
-        mExit.store(false);
-        mThread.join();
-    }
+
+    exitThread();
+
     if (mSensor != nullptr) {
         delete mSensor;
     }
@@ -38,15 +37,18 @@ NickSensors::~NickSensors()
 
 bool NickSensors::openSensor()
 {
+    std::lock_guard<std::mutex> lock(mMutex);
+
     if (mSensor == nullptr) {
         return false;
     }
-
     return mSensor->open();
 }
 
 void NickSensors::closeSensor()
 {
+    std::lock_guard<std::mutex> lock(mMutex);
+
     if (mSensor != nullptr) {
         mSensor->close();
     }
@@ -54,16 +56,17 @@ void NickSensors::closeSensor()
 
 bool NickSensors::getTemperature(double &t)
 {
+    std::lock_guard<std::mutex> lock(mMutex);
+
     if (mSensor == nullptr) {
         return false;
     }
-    //TODO lock
     return mSensor->getTemperature(t);
 }
 
 void NickSensors::setThreshold(double t, IDrukSensor::ThresholdDir thresh, std::function<void(void *, double t)> callback, void *data)
 {
-    //TODO wait till thread start, lock
+    std::lock_guard<std::mutex> lock(mMutex);
     if (mSensor == nullptr) {
         return;
     }
@@ -77,15 +80,21 @@ void NickSensors::setThreshold(double t, IDrukSensor::ThresholdDir thresh, std::
     mThreshDir = thresh;
     mExit.store(true);
     mThread = std::thread(&NickSensors::thresholdThread, this);
+    //wait till thread start ?
 }
 
 void NickSensors::thresholdThread()
 {
     double t;
+    bool ret;
     std::cout << "Thread started for sensor type " << mType << std::endl;
     while (mExit.load() == true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        if (true == mSensor->getTemperature(t)) {
+        {
+            std::lock_guard<std::mutex> lock(mMutex);
+            ret = mSensor->getTemperature(t);
+        }
+        if (true == ret) {
             if ((mThreshDir == IDrukSensor::ABOVE_VALUE && t > mThreshold) ||
                     (mThreshDir == IDrukSensor::BELOW_VALUE && t < mThreshold)) {
                 mCallback(mData, t);
@@ -93,4 +102,18 @@ void NickSensors::thresholdThread()
         }
     }
     std::cout << "Thread exit for sensor type " << mType << std::endl;
+}
+
+void NickSensors::removeThreshold()
+{
+    std::lock_guard<std::mutex> lock(mMutex);
+    exitThread();
+}
+
+void NickSensors::exitThread()
+{
+    if (mExit.load() == true) {
+        mExit.store(false);
+        mThread.join();
+    }
 }

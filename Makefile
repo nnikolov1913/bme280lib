@@ -11,7 +11,7 @@ SRCFILES=main.cpp
 SOOBJS=$(SRCSOFILES:.c=.o)
 OBJS=$(SRCFILES:.cpp=.o)
 SRCSOCPPOBJS=$(SRCSOCPPFILES:.cpp=.o)
-HEADILES=bme280_defs.h bme280.h i2cBME280.h IDrukSensor.h linux_userspace.h nicksenors.h fake_sensor.h
+HEADFILES=bme280_defs.h bme280.h i2cBME280.h IDrukSensor.h linux_userspace.h nicksenors.h fake_sensor.h
 
 LDFLAGS=-li2c -pthread -L.
 CPP=g++
@@ -19,16 +19,16 @@ CC=gcc
 
 all: $(TARGETSO) $(TARGETBIN)
 
-%.o: %.cpp $(HEADILES)
+%.o: %.cpp $(HEADFILES)
 	$(CPP) $(MYCFLAGS) -fPIC -o $@ -c $<
 
-%.o: %.c $(HEADILES)
+%.o: %.c $(HEADFILES)
 	$(CC) $(MYCFLAGS) -fPIC -o $@ -c $<
 
-$(TARGETSO): $(SOOBJS) $(SRCSOCPPOBJS) $(HEADILES)
+$(TARGETSO): $(SOOBJS) $(SRCSOCPPOBJS) $(HEADFILES)
 	$(CPP) -o $(TARGETSO) -shared $(SOOBJS) $(SRCSOCPPOBJS)
 
-$(TARGETBIN): $(OBJS) $(HEADILES)
+$(TARGETBIN): $(OBJS) $(HEADFILES)
 	$(CPP) -o $(TARGETBIN) $(OBJS) -lnicksensors  $(LDFLAGS)
 
 clean:
