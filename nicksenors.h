@@ -9,7 +9,8 @@ namespace druksensor {
 class NickSensors
 {
     public:
-        //TODO remove default constructor
+        NickSensors() = delete;
+
         ~NickSensors();
 
         //Costructor, initializes the particular senzor depending on the type
