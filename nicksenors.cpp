@@ -56,7 +56,7 @@ void NickSensors::closeSensor()
 
 bool NickSensors::getTemperature(double &t)
 {
-    std::lock_guard<std::mutex> lock(mMutex);
+    std::lock_guard<std::mutex> lock(mTempMutex);
 
     if (mSensor == nullptr) {
         return false;
@@ -91,7 +91,7 @@ void NickSensors::thresholdThread()
     while (mExit.load() == true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         {
-            std::lock_guard<std::mutex> lock(mMutex);
+            std::lock_guard<std::mutex> lock(mTempMutex);
             ret = mSensor->getTemperature(t);
         }
         if (true == ret) {

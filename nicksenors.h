@@ -45,6 +45,7 @@ class NickSensors
         double mThreshold;                          //Threshold value to check against
         IDrukSensor::ThresholdDir mThreshDir;       //Theshold direction to get alarm above or below depending on mThreshold
         std::mutex mMutex;
+        std::mutex mTempMutex;
         void exitThread();
 };
 
