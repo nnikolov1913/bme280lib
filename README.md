@@ -2,7 +2,7 @@
 
 Small library to handle temperature sensors.
 
-It handles bme280 through I2C interface. Source code from Boshc for this sensor is used to read the sensor.
+It handles bme280 through I2C interface. Source code from Bosch for this sensor is used to read the sensor.
 It works on Raspbery Pi when sensor is connected to /dev/i2c-1. These are GPIO02(SDA1) and GPIO03(SCL1) on the PI header.
 
 To compile just run:
