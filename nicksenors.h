@@ -2,6 +2,7 @@
 #include <atomic>
 #include <functional>
 #include <mutex>
+#include <memory>
 #include "IDrukSensor.h"
 
 namespace druksensor {
@@ -37,7 +38,7 @@ class NickSensors
 
     private:
         IDrukSensor::SensorType mType;
-        IDrukSensor *mSensor;
+        std::shared_ptr<IDrukSensor> mSensor;
         std::thread mThread;
         std::atomic_bool mExit;
         void thresholdThread();

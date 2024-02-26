@@ -8,15 +8,14 @@ using namespace druksensor;
 
 NickSensors::NickSensors(IDrukSensor::SensorType type)
 {
-    mSensor = nullptr;
     mExit.store(false);
     std::cout << "Library constructor, type " << type << std::endl;
     mType = type;
     if (type == IDrukSensor::BME280_INT_I2C) {
-        mSensor = new i2cBME280;
+        mSensor.reset(new i2cBME280);
     }
     else if (type == IDrukSensor::FAKE_SENSOR) {
-        mSensor = new fakeSensor;
+        mSensor.reset(new fakeSensor);
     }
     else {
         std::cout << "Uknown type " << type << std::endl;
@@ -30,26 +29,24 @@ NickSensors::~NickSensors()
 
     exitThread();
 
-    if (mSensor != nullptr) {
-        delete mSensor;
-    }
+    mSensor.reset();
 }
 
 bool NickSensors::openSensor()
 {
     std::lock_guard<std::mutex> lock(mMutex);
 
-    if (mSensor == nullptr) {
-        return false;
+    if (mSensor.get()) {
+        return mSensor->open();
     }
-    return mSensor->open();
+    return false;
 }
 
 void NickSensors::closeSensor()
 {
     std::lock_guard<std::mutex> lock(mMutex);
 
-    if (mSensor != nullptr) {
+    if (mSensor.get()) {
         mSensor->close();
     }
 }
@@ -58,16 +55,16 @@ bool NickSensors::getTemperature(double &t)
 {
     std::lock_guard<std::mutex> lock(mTempMutex);
 
-    if (mSensor == nullptr) {
-        return false;
+    if (mSensor.get()) {
+        return mSensor->getTemperature(t);
     }
-    return mSensor->getTemperature(t);
+    return false;
 }
 
 void NickSensors::setThreshold(double t, IDrukSensor::ThresholdDir thresh, std::function<void(void *, double t)> callback, void *data)
 {
     std::lock_guard<std::mutex> lock(mMutex);
-    if (mSensor == nullptr) {
+    if (!mSensor.get()) {
         return;
     }
     if (mExit.load() == true) {
