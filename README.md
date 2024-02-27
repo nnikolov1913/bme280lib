@@ -15,3 +15,7 @@ Some packages might be needed for the compilation. For example libi2c0 and libi2
 
 There is a small example program in main.cpp which shows how it can be used.
 The library also contains a fake sensor just for test purposes
+The executable is called readsensors and can be started with the command:
+
+LD_LIBRARY_PATH=. ./readsensors
+

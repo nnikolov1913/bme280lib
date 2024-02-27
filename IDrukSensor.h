@@ -41,7 +41,10 @@ class IDrukSensor {
         //returns true if temperature successfully was read and placed in t
         virtual bool getTemperature(double &t) = 0;
 
+        //Sets parameter of the sensor
         virtual void setParameter(ParameterType paramtype, int param) = 0;
+
+        //More possible interface functions - calibration, filters ...
 };
 }
 
