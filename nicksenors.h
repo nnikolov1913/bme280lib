@@ -3,9 +3,22 @@
 #include <functional>
 #include <mutex>
 #include <memory>
+#include <list>
 #include "IDrukSensor.h"
 
 namespace druksensor {
+
+class SensorAlarm {
+public:
+    SensorAlarm(double t, IDrukSensor::ThresholdDir dir) : mTemp(t), mThreshDir(dir)
+    {
+    }
+
+    double mTemp;
+    IDrukSensor::ThresholdDir mThreshDir;
+
+    virtual void onAlarm(double t) = 0;
+};
 
 class NickSensors
 {
@@ -29,12 +42,12 @@ class NickSensors
         /*
         Sets threshold value t
         thresh - direction of the threshold (above or below t) 
-        callback and data for the alarm when temperature goes above/below t
+        alarm - the alarm triggered when temperature goes above/below t
         */
-        void setThreshold(double t, IDrukSensor::ThresholdDir thresh, std::function<void(void *, double t)> callback, void *data);
+        void setThreshold(SensorAlarm *alarm);
 
         //removes the threshold alarm set by the setThreshold
-        void removeThreshold();
+        void removeThreshold(SensorAlarm *alarm);
 
     private:
         IDrukSensor::SensorType mType;
@@ -42,12 +55,10 @@ class NickSensors
         std::thread mThread;
         std::atomic_bool mExit;
         void thresholdThread();
-        std::function<void(void *, double t)> mCallback;    //Callback function to trigger the alarm
-        void *mData;                                        //Callback data from the caller
-        double mThreshold;                          //Threshold value to check against
-        IDrukSensor::ThresholdDir mThreshDir;       //Theshold direction to get alarm above or below depending on mThreshold
+        std::list<SensorAlarm *> mListAlarms;
         std::mutex mMutex;
         std::mutex mTempMutex;
+        std::mutex mListMutex;
         void exitThread();
 };
 

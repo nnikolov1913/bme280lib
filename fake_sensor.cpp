@@ -44,7 +44,7 @@ bool fakeSensor::getTemperature(double &t)
             mTemperature = mMax - 1;
         }
     }
-    if (mInc == false) {
+    else {
         mTemperature--;
         if (mTemperature < mMin) {
             mInc = true;

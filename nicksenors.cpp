@@ -61,20 +61,19 @@ bool NickSensors::getTemperature(double &t)
     return false;
 }
 
-void NickSensors::setThreshold(double t, IDrukSensor::ThresholdDir thresh, std::function<void(void *, double t)> callback, void *data)
+void NickSensors::setThreshold(SensorAlarm *alarm)
 {
     std::lock_guard<std::mutex> lock(mMutex);
     if (!mSensor.get()) {
         return;
     }
     if (mExit.load() == true) {
-        std::cout << "Alarm already set " << std::endl;
+        std::cout << "Alarm already started " << std::endl;
+        std::lock_guard<std::mutex> lock(mListMutex);
+        mListAlarms.push_back(alarm);
         return;
     }
-    mData = data;
-    mCallback = callback;
-    mThreshold = t;
-    mThreshDir = thresh;
+    mListAlarms.push_back(alarm);
     mExit.store(true);
     mThread = std::thread(&NickSensors::thresholdThread, this);
     //wait till thread start ?
@@ -91,20 +90,33 @@ void NickSensors::thresholdThread()
             std::lock_guard<std::mutex> lock(mTempMutex);
             ret = mSensor->getTemperature(t);
         }
-        if (true == ret) {
-            if ((mThreshDir == IDrukSensor::ABOVE_VALUE && t > mThreshold) ||
-                    (mThreshDir == IDrukSensor::BELOW_VALUE && t < mThreshold)) {
-                mCallback(mData, t);
+        if (false == ret) {
+            //Notify error ???
+            continue;
+        }
+        {
+            std::lock_guard<std::mutex> lock(mListMutex);
+            for (auto alarm : mListAlarms) {
+                if ((alarm->mThreshDir == IDrukSensor::ABOVE_VALUE && t > alarm->mTemp) ||
+                        (alarm->mThreshDir == IDrukSensor::BELOW_VALUE && t < alarm->mTemp)) {
+                    alarm->onAlarm(t);
+                }
             }
         }
     }
     std::cout << "Thread exit for sensor type " << mType << std::endl;
 }
 
-void NickSensors::removeThreshold()
+void NickSensors::removeThreshold(SensorAlarm *alarm)
 {
-    std::lock_guard<std::mutex> lock(mMutex);
-    exitThread();
+    {
+        std::lock_guard<std::mutex> lock(mListMutex);
+        mListAlarms.remove(alarm);
+    }
+    if (mListAlarms.empty()) {
+        std::lock_guard<std::mutex> lock(mMutex);
+        exitThread();
+    }
 }
 
 void NickSensors::exitThread()

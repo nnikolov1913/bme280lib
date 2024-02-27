@@ -13,6 +13,19 @@ static void alarm_on_fire(void *data, double t) {
 }
 */
 
+class MySensorAlarm : public SensorAlarm {
+public:
+    MySensorAlarm(double t, IDrukSensor::ThresholdDir dir, IDrukSensor::SensorType type) : SensorAlarm(t, dir)
+    {
+        mType = type;
+    }
+
+    virtual void onAlarm(double t) override {
+        std::cout << "Temperature alarm " << t << " sensor type " << (int)mType << std::endl;
+    }
+    IDrukSensor::SensorType mType;
+};
+
 int main(int argc, char *argv[])
 {
     unsigned count = 0;
@@ -56,22 +69,23 @@ int main(int argc, char *argv[])
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    sensor = new NickSensors(IDrukSensor::BME280_INT_I2C);
-    if (sensor->openSensor() == true) {
-        //sensor->setThreshold(21.0, IDrukSensor::ABOVE_VALUE, alarm_on_fire, NULL);
-        sensor->setThreshold(21.0, IDrukSensor::ABOVE_VALUE, [](void *data, double t)
-                { std::cout << "Temperature alarm " << t << "ᵒC" << std::endl;}, NULL);
+    MySensorAlarm alarmbme280(21.0, IDrukSensor::ABOVE_VALUE, IDrukSensor::BME280_INT_I2C);
+    sensor = new NickSensors(alarmbme280.mType);
+    if (sensor != nullptr && sensor->openSensor() == true) {
+        sensor->setThreshold(&alarmbme280);
     }
 
+    MySensorAlarm alarmfake(0.0, IDrukSensor::BELOW_VALUE, IDrukSensor::FAKE_SENSOR);
+    MySensorAlarm alarmfake1(30.0, IDrukSensor::ABOVE_VALUE, IDrukSensor::FAKE_SENSOR);
     if (sensor1 != nullptr) {
-        sensor1->setThreshold(20.0, IDrukSensor::BELOW_VALUE, [](void *data, double t)
-                { std::cout << "Fake temperature alarm " << t << "ᵒC" << std::endl;}, NULL);
+        sensor1->setThreshold(&alarmfake);
+        sensor1->setThreshold(&alarmfake1);
     }
 
     //Wait for some alarms. At least from fake sensor should come
     std::this_thread::sleep_for(std::chrono::seconds(60));
 
-    sensor->removeThreshold();
+    sensor->removeThreshold(&alarmbme280);
 
     delete sensor;
     delete sensor1;
