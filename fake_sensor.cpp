@@ -55,3 +55,6 @@ bool fakeSensor::getTemperature(double &t)
     return true;
 }
 
+void fakeSensor::setParameter(ParameterType paramtype, int param) {
+    //notthig here
+}

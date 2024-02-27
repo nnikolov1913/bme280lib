@@ -23,6 +23,12 @@ class IDrukSensor {
             BELOW_VALUE,            //Set value to get alarm below it
         };
 
+        //Used to set parameter to the sensor
+        enum ParameterType {
+            INTERFACE,
+            ADDRESS,
+        };
+
         virtual ~IDrukSensor() = default;
 
         //Open sensor
@@ -31,8 +37,11 @@ class IDrukSensor {
         //Close sensor
         virtual void close() = 0;
 
-        //Read temparature in double
+        //Read temparature
+        //returns true if temperature successfully was read and placed in t
         virtual bool getTemperature(double &t) = 0;
+
+        virtual void setParameter(ParameterType paramtype, int param) = 0;
 };
 }
 

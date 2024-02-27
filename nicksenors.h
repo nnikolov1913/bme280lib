@@ -40,14 +40,17 @@ class NickSensors
         void closeSensor();
 
         /*
-        Sets threshold value t
-        thresh - direction of the threshold (above or below t) 
-        alarm - the alarm triggered when temperature goes above/below t
+         * Sets threshold value t
+         * thresh - direction of the threshold (above or below t) 
+         * alarm - the alarm triggered when temperature goes above/below t
         */
         void setThreshold(SensorAlarm *alarm);
 
         //removes the threshold alarm set by the setThreshold
         void removeThreshold(SensorAlarm *alarm);
+
+        //sets parameter to the sensor
+        void setParameter(IDrukSensor::ParameterType paramtype, int param);
 
     private:
         IDrukSensor::SensorType mType;

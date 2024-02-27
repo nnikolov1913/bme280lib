@@ -146,7 +146,7 @@ static struct bme280_ctx bme280ctx;
  * ./bme280 /dev/i2c-1
  */
 
-int bme280_main(const char* devname)
+int bme280_main(const char* devname, int address)
 {
     struct bme280_dev dev;
     struct identifier id;
@@ -168,7 +168,8 @@ int bme280_main(const char* devname)
         }
 
         /* Make sure to select BME280_I2C_ADDR_PRIM or BME280_I2C_ADDR_SEC as needed */
-        id.dev_addr = BME280_I2C_ADDR_PRIM;
+        //id.dev_addr = BME280_I2C_ADDR_PRIM;
+        id.dev_addr = address;
 #ifdef __KERNEL__IFACE
         if (ioctl(id.fd, I2C_SLAVE, id.dev_addr) < 0)
         {

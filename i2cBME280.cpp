@@ -9,6 +9,8 @@ using namespace druksensor;
 i2cBME280::i2cBME280(): mOpened(false)
 {
     std::cout << "BME280 I2C constructor" << std::endl;
+    mAddress = BME280_I2C_ADDR_PRIM;
+    mInterface = "/dev/i2c-1";
 }
 
 i2cBME280::~i2cBME280()
@@ -20,7 +22,7 @@ i2cBME280::~i2cBME280()
 bool i2cBME280::open()
 {
     if(mOpened == false) {
-        int ret = bme280_main("/dev/i2c-1");
+        int ret = bme280_main(mInterface.c_str(), mAddress);
         if (ret != BME280_OK) {
             std::cout << "BME280 I2C open error " << ret << mOpened << std::endl;
             return false;
@@ -54,3 +56,14 @@ bool i2cBME280::getTemperature(double &t)
     return true;
 }
 
+void i2cBME280::setParameter(ParameterType paramtype, int param) {
+    switch (paramtype) {
+        case INTERFACE:
+            mInterface = "/dev/i2c-" + std::to_string(param);
+            std::cout << "BME280 I2C interface set to " << mInterface <<std::endl;
+            break;
+        case ADDRESS:
+            mAddress = param;
+            break;
+    }
+}

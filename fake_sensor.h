@@ -11,6 +11,7 @@ class fakeSensor : public IDrukSensor {
         virtual bool open() override;
         virtual void close() override;
         virtual bool getTemperature(double &t) override;
+        virtual void setParameter(ParameterType paramtype, int param) override;
 
     private:
         bool mOpened;

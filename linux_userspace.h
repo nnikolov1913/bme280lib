@@ -4,7 +4,7 @@
 extern "C" {
 
 //Initialize the sensor/device. Using I2C by default
-int bme280_main(const char* devname);
+int bme280_main(const char* devname, int address);
 
 //Read data from the sensor. Using double by default
 int bme280_read_data(struct bme280_data *comp_data);

@@ -21,6 +21,7 @@ NickSensors::NickSensors(IDrukSensor::SensorType type)
         std::cout << "Uknown type " << type << std::endl;
         mType = IDrukSensor::NO_SENSOR;
     }
+    //TODO what to do in case of error(no mSensor) ?
 }
 
 NickSensors::~NickSensors()
@@ -124,5 +125,12 @@ void NickSensors::exitThread()
     if (mExit.load() == true) {
         mExit.store(false);
         mThread.join();
+    }
+}
+
+void NickSensors::setParameter(IDrukSensor::ParameterType paramtype, int param)
+{
+    if (mSensor.get()) {
+        return mSensor->setParameter(paramtype, param);
     }
 }
