@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     NickSensors *sensor = new NickSensors(IDrukSensor::BME280_INT_I2C);
     if (sensor) {
         sensor->setParameter(IDrukSensor::INTERFACE, 1);
+        sensor->setParameter(IDrukSensor::ADDRESS, 0x76);
         if (sensor->openSensor() == false) {
             std::cout << "BME280 sensor open ERROR " << std::endl;
             delete sensor;
@@ -45,13 +46,24 @@ int main(int argc, char *argv[])
         sensor1 = nullptr;
     }
 
+    NickSensors *sensor2 = new NickSensors(IDrukSensor::BME280_INT_I2C);
+    if (sensor2) {
+        sensor2->setParameter(IDrukSensor::INTERFACE, 1);
+        sensor2->setParameter(IDrukSensor::ADDRESS, 0x77);
+        if (sensor2->openSensor() == false) {
+            std::cout << "BME280 sensor open ERROR " << std::endl;
+            delete sensor2;
+            sensor2 = nullptr;
+        }
+    }
+
     while(count++ < 5) {
         if (sensor != nullptr) {
             if (sensor->getTemperature(temp)) {
                 std::cout << "BME280 temperature " << temp << " ᵒC" << std::endl;
             }
             else {
-                std::cout << "Fake temperature ERROR" << std::endl;
+                std::cout << "BME280 temperature ERROR" << std::endl;
             }
         }
 
@@ -61,6 +73,15 @@ int main(int argc, char *argv[])
             }
             else {
                 std::cout << "Fake temperature ERROR" << std::endl;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if (sensor2 != nullptr) {
+            if (sensor2->getTemperature(temp1)) {
+                std::cout << "BME280 sec temperature " << temp1 << " ᵒC" << std::endl;
+            }
+            else {
+                std::cout << "BME280 sec temperature ERROR" << std::endl;
             }
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -89,4 +110,5 @@ int main(int argc, char *argv[])
 
     delete sensor;
     delete sensor1;
+    delete sensor2;
 }

@@ -6,7 +6,7 @@
 
 using namespace druksensor;
 
-i2cBME280::i2cBME280(): mOpened(false)
+i2cBME280::i2cBME280(): mOpened(false), mCtx(nullptr)
 {
     std::cout << "BME280 I2C constructor" << std::endl;
     mAddress = BME280_I2C_ADDR_PRIM;
@@ -22,14 +22,14 @@ i2cBME280::~i2cBME280()
 bool i2cBME280::open()
 {
     if(mOpened == false) {
-        int ret = bme280_main(mInterface.c_str(), mAddress);
+        int ret = bme280_main(mInterface.c_str(), mAddress, &mCtx);
         if (ret != BME280_OK) {
             std::cout << "BME280 I2C open error " << ret << mOpened << std::endl;
             return false;
         }
     }
     mOpened = true;
-    std::cout << "BME280 I2C opened " << mOpened << std::endl;
+    std::cout << "BME280 I2C opened " << mOpened << " address " << mAddress << std::endl;
     return true;
 }
 
@@ -37,9 +37,10 @@ void i2cBME280::close()
 {
     if(mOpened == true) {
         std::cout << "BME280 I2C close" << std::endl;
-        bme280_close();
+        bme280_close(mCtx);
     }
     mOpened = false;
+    mCtx = nullptr;
 }
 
 bool i2cBME280::getTemperature(double &t)
@@ -49,7 +50,7 @@ bool i2cBME280::getTemperature(double &t)
         return false;
     }
     struct bme280_data comp_data { 0.0, 0.0, 0.0 };
-    if (bme280_read_data(&comp_data) != BME280_OK) {
+    if (bme280_read_data(mCtx, &comp_data) != BME280_OK) {
         return false;
     }
     t = comp_data.temperature;

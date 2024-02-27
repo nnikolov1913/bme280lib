@@ -139,21 +139,23 @@ struct bme280_ctx
     struct identifier id;
 };
 
-static struct bme280_ctx bme280ctx;
+//static struct bme280_ctx bme280ctx;
 
 /*!
  * @brief This function starts execution of the program.
  * ./bme280 /dev/i2c-1
  */
 
-int bme280_main(const char* devname, int address)
+int bme280_main(const char* devname, int address, void **ctx)
 {
     struct bme280_dev dev;
     struct identifier id;
 
+    struct bme280_ctx *bme280ctx = malloc(sizeof(*bme280ctx));
+    memset(bme280ctx, 0 , sizeof(*bme280ctx));
     /* Variable to define the result */
     int8_t rslt = BME280_OK;
-    if(bme280ctx.inited == 0)
+    if(bme280ctx->inited == 0)
     {
         if (devname == NULL)
         {
@@ -193,20 +195,21 @@ int bme280_main(const char* devname, int address)
             fprintf(stderr, "Failed to initialize the device (code %+d).\n", rslt);
             return BME280_E_DEV_NOT_FOUND;
         }
-        bme280ctx.id = id;
-        bme280ctx.dev = dev;
-        bme280ctx.dev.intf_ptr = &bme280ctx.id;
-        bme280ctx.inited = 1;
+        bme280ctx->id = id;
+        bme280ctx->dev = dev;
+        bme280ctx->dev.intf_ptr = &bme280ctx->id;
+        bme280ctx->inited = 1;
     }
+    *ctx = bme280ctx;
 
     return BME280_OK;
 }
 
-int bme280_read_data(struct bme280_data *comp_data)
+int bme280_read_data(struct bme280_ctx *bme280ctx, struct bme280_data *comp_data)
 {
-    if (bme280ctx.inited == 0)
+    if (bme280ctx->inited == 0)
         return BME280_E_DEV_NOT_FOUND;
-    int8_t rslt = stream_sensor_data_forced_mode(&bme280ctx.dev, comp_data);
+    int8_t rslt = stream_sensor_data_forced_mode(&bme280ctx->dev, comp_data);
     if (rslt != BME280_OK)
     {
         fprintf(stderr, "Failed to stream sensor data (code %+d).\n", rslt);
@@ -214,13 +217,14 @@ int bme280_read_data(struct bme280_data *comp_data)
     return rslt;
 }
 
-void bme280_close()
+void bme280_close(struct bme280_ctx *bme280ctx)
 {
-    if (bme280ctx.inited == 0)
+    if (bme280ctx->inited == 0)
         return;
-    close(bme280ctx.id.fd);
-    bme280ctx.id.fd = -1;
-    bme280ctx.inited = 0;
+    close(bme280ctx->id.fd);
+    bme280ctx->id.fd = -1;
+    bme280ctx->inited = 0;
+    free(bme280ctx);
 }
 
 /*!

@@ -18,6 +18,7 @@ class i2cBME280 : public IDrukSensor {
         bool mOpened;
         std::string mInterface;
         int mAddress;
+        void *mCtx;
 };
 
 }
