@@ -57,7 +57,6 @@ class NickSensors
         std::shared_ptr<IDrukSensor> mSensor;
         std::thread mThread;
         std::atomic_bool mExit;
-        void thresholdThread();
         std::list<SensorAlarm *> mListAlarms;
         std::mutex mMutex;
         std::mutex mTempMutex;

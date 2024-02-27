@@ -76,36 +76,32 @@ void NickSensors::setThreshold(SensorAlarm *alarm)
     }
     mListAlarms.push_back(alarm);
     mExit.store(true);
-    mThread = std::thread(&NickSensors::thresholdThread, this);
-    //wait till thread start ?
-}
-
-void NickSensors::thresholdThread()
-{
-    double t;
-    bool ret;
-    std::cout << "Thread started for sensor type " << mType << std::endl;
-    while (mExit.load() == true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        {
-            std::lock_guard<std::mutex> lock(mTempMutex);
-            ret = mSensor->getTemperature(t);
-        }
-        if (false == ret) {
-            //Notify error ???
-            continue;
-        }
-        {
-            std::lock_guard<std::mutex> lock(mListMutex);
-            for (auto alarm : mListAlarms) {
-                if ((alarm->mThreshDir == IDrukSensor::ABOVE_VALUE && t > alarm->mTemp) ||
-                        (alarm->mThreshDir == IDrukSensor::BELOW_VALUE && t < alarm->mTemp)) {
-                    alarm->onAlarm(t);
+    mThread = std::thread([this]() {
+        double t;
+        bool ret;
+        std::cout << "Thread started for sensor type " << mType << std::endl;
+        while (mExit.load() == true) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            {
+                std::lock_guard<std::mutex> lock(mTempMutex);
+                ret = mSensor->getTemperature(t);
+            }
+            if (false == ret) {
+                //TODO Notify error ???
+                continue;
+            }
+            {
+                std::lock_guard<std::mutex> lock(mListMutex);
+                for (auto alarm : mListAlarms) {
+                    if ((alarm->mThreshDir == IDrukSensor::ABOVE_VALUE && t > alarm->mTemp) ||
+                            (alarm->mThreshDir == IDrukSensor::BELOW_VALUE && t < alarm->mTemp)) {
+                        alarm->onAlarm(t);
+                    }
                 }
             }
         }
-    }
-    std::cout << "Thread exit for sensor type " << mType << std::endl;
+        std::cout << "Thread exit for sensor type " << mType << std::endl;
+    });
 }
 
 void NickSensors::removeThreshold(SensorAlarm *alarm)
