@@ -1,3 +1,6 @@
+/*
+ * Example program to test libnicksensors.so
+ */
 
 #include <iostream>
 #include <chrono>
@@ -6,12 +9,6 @@
 #include "nicksenors.h"
 
 using namespace druksensor;
-
-/*
-static void alarm_on_fire(void *data, double t) {
-    std::cout << "Temperature alarm" << t << "ᵒC" << std::endl;
-}
-*/
 
 class MySensorAlarm : public SensorAlarm {
 public:
@@ -32,10 +29,13 @@ int main(int argc, char *argv[])
     double temp, temp1;
 
     NickSensors *sensor = new NickSensors(IDrukSensor::BME280_INT_I2C);
-    if (sensor && sensor->openSensor() == false) {
-        std::cout << "BME280 sensor open ERROR " << std::endl;
-        delete sensor;
-        sensor = nullptr;
+    if (sensor) {
+        sensor->setParameter(IDrukSensor::INTERFACE, 1);
+        if (sensor->openSensor() == false) {
+            std::cout << "BME280 sensor open ERROR " << std::endl;
+            delete sensor;
+            sensor = nullptr;
+        }
     }
 
     NickSensors *sensor1 = new NickSensors(IDrukSensor::FAKE_SENSOR);
