@@ -530,7 +530,7 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev, struct bme280_data
     /*Calculate the minimum delay required between consecutive measurement based upon the sensor enabled
      *  and the oversampling configuration. */
     req_delay = bme280_cal_meas_delay(&dev->settings);
-    req_delay = 50;
+    req_delay *= 1000;
 
     /* Continuously stream sensor data */
     while (1)

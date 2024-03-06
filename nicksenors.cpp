@@ -1,6 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include "i2cBME280.h"
+#include "spiBME280.h"
 #include "fake_sensor.h"
 #include "nicksenors.h"
 
@@ -13,6 +14,9 @@ NickSensors::NickSensors(IDrukSensor::SensorType type)
     mType = type;
     if (type == IDrukSensor::BME280_INT_I2C) {
         mSensor.reset(new i2cBME280);
+    }
+    else if (type == IDrukSensor::BME280_INT_SPI) {
+        mSensor.reset(new spiBME280);
     }
     else if (type == IDrukSensor::FAKE_SENSOR) {
         mSensor.reset(new fakeSensor);

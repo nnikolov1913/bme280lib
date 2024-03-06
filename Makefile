@@ -5,13 +5,13 @@ TARGETSO=libnicksensors.so
 MYCFLAGS:=-Wall -O
 
 SRCSOFILES=bme280.c linux_userspace.c
-SRCSOCPPFILES=i2cBME280.cpp fake_sensor.cpp nicksenors.cpp
+SRCSOCPPFILES=i2cBME280.cpp spiBME280.cpp fake_sensor.cpp nicksenors.cpp
 SRCFILES=main.cpp
 
 SOOBJS=$(SRCSOFILES:.c=.o)
 OBJS=$(SRCFILES:.cpp=.o)
 SRCSOCPPOBJS=$(SRCSOCPPFILES:.cpp=.o)
-HEADFILES=bme280_defs.h bme280.h i2cBME280.h IDrukSensor.h linux_userspace.h nicksenors.h fake_sensor.h
+HEADFILES=bme280_defs.h bme280.h i2cBME280.h i2cBME280.h IDrukSensor.h linux_userspace.h nicksenors.h fake_sensor.h
 
 LDFLAGS=-li2c -pthread -L.
 CPP=g++

@@ -46,12 +46,24 @@ int main(int argc, char *argv[])
         sensor1 = nullptr;
     }
 
+    /*
     NickSensors *sensor2 = new NickSensors(IDrukSensor::BME280_INT_I2C);
     if (sensor2) {
         sensor2->setParameter(IDrukSensor::INTERFACE, 1);
         sensor2->setParameter(IDrukSensor::ADDRESS, 0x77);
         if (sensor2->openSensor() == false) {
-            std::cout << "BME280 sensor open ERROR " << std::endl;
+            std::cout << "BME280 sec sensor open ERROR " << std::endl;
+            delete sensor2;
+            sensor2 = nullptr;
+        }
+    }
+    */
+
+    NickSensors *sensor2 = new NickSensors(IDrukSensor::BME280_INT_SPI);
+    if (sensor2) {
+        sensor2->setParameter(IDrukSensor::INTERFACE, 0);
+        if (sensor2->openSensor() == false) {
+            std::cout << "BME280 spi sensor open ERROR " << std::endl;
             delete sensor2;
             sensor2 = nullptr;
         }
@@ -104,7 +116,7 @@ int main(int argc, char *argv[])
     }
 
     //Wait for some alarms. At least from fake sensor should come
-    //std::this_thread::sleep_for(std::chrono::seconds(60));
+    std::this_thread::sleep_for(std::chrono::seconds(60));
 
     sensor->removeThreshold(alarmbme280);
     sensor1->removeThreshold(alarmfake);

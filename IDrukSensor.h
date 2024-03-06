@@ -13,7 +13,8 @@ class IDrukSensor {
         //Sensor type
         enum SensorType {
             NO_SENSOR,
-            BME280_INT_I2C,         //BME280 sensor
+            BME280_INT_I2C,         //BME280 sensor i2c bus
+            BME280_INT_SPI,         //BME280 sensor spi bus
             FAKE_SENSOR,            //Fake sensor for tests purposes
         };
 
