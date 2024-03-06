@@ -102,17 +102,34 @@ int main(int argc, char *argv[])
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    std::shared_ptr<MySensorAlarm> alarmbme280 = std::make_shared<MySensorAlarm>(21.0, IDrukSensor::ABOVE_VALUE, IDrukSensor::BME280_INT_I2C);
+    std::shared_ptr<MySensorAlarm> alarmbme280 = std::make_shared<MySensorAlarm>(21.0,
+            IDrukSensor::ABOVE_VALUE,
+            IDrukSensor::BME280_INT_I2C);
+
     sensor = new NickSensors(alarmbme280->mType);
     if (sensor != nullptr && sensor->openSensor() == true) {
         sensor->setThreshold(alarmbme280);
     }
 
-    std::shared_ptr<MySensorAlarm> alarmfake = std::make_shared<MySensorAlarm>(0.0, IDrukSensor::BELOW_VALUE, IDrukSensor::FAKE_SENSOR);
-    std::shared_ptr<MySensorAlarm> alarmfake1 = std::make_shared<MySensorAlarm>(30.0, IDrukSensor::ABOVE_VALUE, IDrukSensor::FAKE_SENSOR);
+    std::shared_ptr<MySensorAlarm> alarmfake = std::make_shared<MySensorAlarm>(0.0,
+            IDrukSensor::BELOW_VALUE,
+            IDrukSensor::FAKE_SENSOR);
+
+    std::shared_ptr<MySensorAlarm> alarmfake1 = std::make_shared<MySensorAlarm>(30.0,
+            IDrukSensor::ABOVE_VALUE,
+            IDrukSensor::FAKE_SENSOR);
+
     if (sensor1 != nullptr) {
         sensor1->setThreshold(alarmfake);
         sensor1->setThreshold(alarmfake1);
+    }
+
+    std::shared_ptr<MySensorAlarm> alarmbme280spi = std::make_shared<MySensorAlarm>(21.0,
+            IDrukSensor::ABOVE_VALUE,
+            IDrukSensor::BME280_INT_SPI);
+
+    if (sensor2 != nullptr) {
+        sensor2->setThreshold(alarmbme280spi);
     }
 
     //Wait for some alarms. At least from fake sensor should come
