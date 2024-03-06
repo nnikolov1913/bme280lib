@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
                 std::cout << "Fake temperature ERROR" << std::endl;
             }
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        //std::this_thread::sleep_for(std::chrono::seconds(1));
         if (sensor2 != nullptr) {
             if (sensor2->getTemperature(temp1)) {
                 std::cout << "BME280 sec temperature " << temp1 << " ᵒC" << std::endl;
@@ -84,29 +84,32 @@ int main(int argc, char *argv[])
                 std::cout << "BME280 sec temperature ERROR" << std::endl;
             }
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        //std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     delete sensor;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    MySensorAlarm alarmbme280(21.0, IDrukSensor::ABOVE_VALUE, IDrukSensor::BME280_INT_I2C);
-    sensor = new NickSensors(alarmbme280.mType);
+    std::shared_ptr<MySensorAlarm> alarmbme280 = std::make_shared<MySensorAlarm>(21.0, IDrukSensor::ABOVE_VALUE, IDrukSensor::BME280_INT_I2C);
+    sensor = new NickSensors(alarmbme280->mType);
     if (sensor != nullptr && sensor->openSensor() == true) {
-        sensor->setThreshold(&alarmbme280);
+        sensor->setThreshold(alarmbme280);
     }
 
-    MySensorAlarm alarmfake(0.0, IDrukSensor::BELOW_VALUE, IDrukSensor::FAKE_SENSOR);
-    MySensorAlarm alarmfake1(30.0, IDrukSensor::ABOVE_VALUE, IDrukSensor::FAKE_SENSOR);
+    std::shared_ptr<MySensorAlarm> alarmfake = std::make_shared<MySensorAlarm>(0.0, IDrukSensor::BELOW_VALUE, IDrukSensor::FAKE_SENSOR);
+    std::shared_ptr<MySensorAlarm> alarmfake1 = std::make_shared<MySensorAlarm>(30.0, IDrukSensor::ABOVE_VALUE, IDrukSensor::FAKE_SENSOR);
     if (sensor1 != nullptr) {
-        sensor1->setThreshold(&alarmfake);
-        sensor1->setThreshold(&alarmfake1);
+        sensor1->setThreshold(alarmfake);
+        sensor1->setThreshold(alarmfake1);
     }
+    std::cout << "main alarmfake use count " << alarmfake.use_count() << std::endl;
 
     //Wait for some alarms. At least from fake sensor should come
-    std::this_thread::sleep_for(std::chrono::seconds(60));
+    //std::this_thread::sleep_for(std::chrono::seconds(60));
 
-    sensor->removeThreshold(&alarmbme280);
+    sensor->removeThreshold(alarmbme280);
+    sensor1->removeThreshold(alarmfake);
+    sensor1->removeThreshold(alarmfake1);
 
     delete sensor;
     delete sensor1;

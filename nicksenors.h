@@ -44,10 +44,10 @@ class NickSensors
          * thresh - direction of the threshold (above or below t) 
          * alarm - the alarm triggered when temperature goes above/below t
         */
-        void setThreshold(SensorAlarm *alarm);
+        void setThreshold(std::shared_ptr<SensorAlarm> alarm);
 
         //removes the threshold alarm set by the setThreshold
-        void removeThreshold(SensorAlarm *alarm);
+        void removeThreshold(std::shared_ptr<SensorAlarm> alarm);
 
         //sets parameter to the sensor
         void setParameter(IDrukSensor::ParameterType paramtype, int param);
@@ -57,7 +57,7 @@ class NickSensors
         std::shared_ptr<IDrukSensor> mSensor;
         std::thread mThread;
         std::atomic_bool mExit;
-        std::list<SensorAlarm *> mListAlarms;
+        std::list<std::shared_ptr<SensorAlarm>> mListAlarms;
         std::mutex mMutex;
         std::mutex mTempMutex;
         std::mutex mListMutex;
