@@ -69,7 +69,6 @@ void NickSensors::setThreshold(std::shared_ptr<SensorAlarm> alarm)
         return;
     }
     if (mExit.load() == true) {
-        std::cout << "Alarm already started, alarm use count " << alarm.use_count() << std::endl;
         std::lock_guard<std::mutex> lock(mListMutex);
         mListAlarms.push_back(alarm);
         return;
@@ -106,14 +105,12 @@ void NickSensors::setThreshold(std::shared_ptr<SensorAlarm> alarm)
 
 void NickSensors::removeThreshold(std::shared_ptr<SensorAlarm> alarm)
 {
-    std::cout << "removeThreshold list count " << mListAlarms.size() << std::endl;
+    std::lock_guard<std::mutex> lock(mMutex);
     {
         std::lock_guard<std::mutex> lock(mListMutex);
         mListAlarms.remove(alarm);
     }
-    std::cout << "removeThreshold after remove list count " << mListAlarms.size() << std::endl;
     if (mListAlarms.empty()) {
-        std::lock_guard<std::mutex> lock(mMutex);
         exitThread();
     }
 }

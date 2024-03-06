@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
                 std::cout << "Fake temperature ERROR" << std::endl;
             }
         }
-        //std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         if (sensor2 != nullptr) {
             if (sensor2->getTemperature(temp1)) {
                 std::cout << "BME280 sec temperature " << temp1 << " ᵒC" << std::endl;
@@ -102,7 +102,6 @@ int main(int argc, char *argv[])
         sensor1->setThreshold(alarmfake);
         sensor1->setThreshold(alarmfake1);
     }
-    std::cout << "main alarmfake use count " << alarmfake.use_count() << std::endl;
 
     //Wait for some alarms. At least from fake sensor should come
     //std::this_thread::sleep_for(std::chrono::seconds(60));
