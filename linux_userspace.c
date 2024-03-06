@@ -22,6 +22,7 @@
 #define __KERNEL__IFACE
 #ifdef __KERNEL__IFACE
 #include <linux/i2c-dev.h>
+#include <linux/spi/spidev.h>
 #include <sys/ioctl.h>
 #endif
 
@@ -118,6 +119,40 @@ int8_t user_i2c_read(uint8_t reg_addr, uint8_t *data, uint32_t len, void *intf_p
 int8_t user_i2c_write(uint8_t reg_addr, const uint8_t *data, uint32_t len, void *intf_ptr);
 
 /*!
+ *  @brief Function for writing the sensor's registers through SPI bus.
+ *
+ *  @param[in] reg_addr       : Register address.
+ *  @param[in] data           : Pointer to the data buffer whose value is to be written.
+ *  @param[in] len            : No of bytes to write.
+ *  @param[in, out] intf_ptr  : Void pointer that can enable the linking of descriptors
+ *                                  for interface related call backs
+ *
+ *  @return Status of execution
+ *
+ *  @retval BME280_OK -> Success
+ *  @retval BME280_E_COMM_FAIL -> Communication failure.
+ *
+ */
+int8_t user_spi_write(uint8_t reg_addr, const uint8_t *data, uint32_t len, void *intf_ptr);
+
+/*!
+ *  @brief Function for reading the sensor's registers through I2C bus.
+ *
+ *  @param[in] reg_addr       : Register address.
+ *  @param[out] data          : Pointer to the data buffer to store the read data.
+ *  @param[in] len            : No of bytes to read.
+ *  @param[in, out] intf_ptr  : Void pointer that can enable the linking of descriptors
+ *                                  for interface related call backs.
+ *
+ *  @return Status of execution
+ *
+ *  @retval BME280_OK -> Success
+ *  @retval > BME280_E_COMM_FAIL -> Communication failure.
+ *
+ */
+int8_t user_spi_read(uint8_t reg_addr, uint8_t *data, uint32_t len, void *intf_ptr);
+
+/*!
  * @brief Function reads temperature, humidity and pressure data in forced mode.
  *
  * @param[in] dev   :   Structure instance of bme280_dev.
@@ -140,6 +175,55 @@ struct bme280_ctx
 };
 
 //static struct bme280_ctx bme280ctx;
+
+/*!
+ *  @brief Function to init SPI bus.
+ *
+ *  @param[in] fd             : File descriptor of the SPI bus
+ *
+ *  @return Status of execution
+ *
+ *  @retval BME280_OK -> Success
+ *  @retval > BME280_E_COMM_FAIL -> Communication failure.
+ *
+ */
+static int bme280_spi_init(int fd)
+{
+    /* Set SPI_POL and SPI_PHA */
+    unsigned spi_mode = SPI_MODE_3;
+    if (ioctl(fd, SPI_IOC_WR_MODE, &spi_mode) < 0)
+    {
+        return BME280_E_COMM_FAIL;
+    }
+    if (ioctl(fd, SPI_IOC_RD_MODE, &spi_mode) < 0)
+    {
+        return BME280_E_COMM_FAIL;
+    }
+
+    /* Set bits per word*/
+    unsigned bits_per_word = 8;
+    if (ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits_per_word) < 0)
+    {
+        return BME280_E_COMM_FAIL;
+    }
+    if (ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits_per_word) < 0)
+    {
+        return BME280_E_COMM_FAIL;
+    }
+
+    /* Set SPI speed*/
+    unsigned speed = 5000000;
+    if (ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed) < 0)
+    {
+        return BME280_E_COMM_FAIL;
+    }
+    if (ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed) < 0)
+    {
+        return BME280_E_COMM_FAIL;
+    }
+
+    return BME280_OK;
+}
 
 /*!
  * @brief This function starts execution of the program.
@@ -169,20 +253,41 @@ int bme280_main(const char* devname, int address, void **ctx)
             return BME280_E_DEV_NOT_FOUND;
         }
 
-        /* Make sure to select BME280_I2C_ADDR_PRIM or BME280_I2C_ADDR_SEC as needed */
-        //id.dev_addr = BME280_I2C_ADDR_PRIM;
-        id.dev_addr = address;
-#ifdef __KERNEL__IFACE
-        if (ioctl(id.fd, I2C_SLAVE, id.dev_addr) < 0)
+        if (strstr(devname, "i2c"))
         {
-            fprintf(stderr, "Failed to acquire bus access and/or talk to slave.\n");
-            return BME280_E_COMM_FAIL;
-        }
+            /* Make sure to select BME280_I2C_ADDR_PRIM or BME280_I2C_ADDR_SEC as needed */
+            //id.dev_addr = BME280_I2C_ADDR_PRIM;
+            id.dev_addr = address;
+#ifdef __KERNEL__IFACE
+            if (ioctl(id.fd, I2C_SLAVE, id.dev_addr) < 0)
+            {
+                fprintf(stderr, "Failed to acquire bus access and/or talk to slave.\n");
+                return BME280_E_COMM_FAIL;
+            }
 #endif
 
-        dev.intf = BME280_I2C_INTF;
-        dev.read = user_i2c_read;
-        dev.write = user_i2c_write;
+            dev.intf = BME280_I2C_INTF;
+            dev.read = user_i2c_read;
+            dev.write = user_i2c_write;
+        }
+        else if (strstr(devname, "spidev"))
+        {
+            id.dev_addr = 0;
+            dev.intf = BME280_SPI_INTF;
+            dev.read = user_spi_read;
+            dev.write = user_spi_write;
+
+            if (bme280_spi_init(id.fd) != BME280_OK)
+            {
+                fprintf(stderr, "Failed to init spi bus\n");
+                return BME280_E_COMM_FAIL;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "Device %s not supported.\n", devname);
+            return BME280_E_DEV_NOT_FOUND;
+        }
         dev.delay_us = user_delay_us;
 
         /* Update interface pointer with the structure that contains both device address and file descriptor */
@@ -255,6 +360,38 @@ int8_t user_i2c_read(uint8_t reg_addr, uint8_t *data, uint32_t len, void *intf_p
 }
 
 /*!
+ * @brief This function reading the sensor's registers through SPI bus.
+ */
+int8_t user_spi_read(uint8_t reg_addr, uint8_t *data, uint32_t len, void *intf_ptr)
+{
+    int ret;
+    struct identifier *id;
+    struct spi_ioc_transfer spi_message[2];
+
+    id = (struct identifier *)intf_ptr;
+    data[0] = 0;
+
+    memset(spi_message, 0, sizeof(spi_message));
+    spi_message[0].tx_buf = (__u64)&reg_addr;
+    spi_message[0].rx_buf = (__u64)0;
+    spi_message[0].len = sizeof(reg_addr);
+
+    spi_message[1].tx_buf = (__u64)0;
+    spi_message[1].rx_buf = (__u64)data;
+    spi_message[1].len = len;
+
+    ret = ioctl(id->fd, SPI_IOC_MESSAGE(2), spi_message);
+    if(ret < 0)
+    {
+        fprintf(stderr, "Failed to red reg_addr=%#x ret=%d, errno %d\n", reg_addr, ret, errno);
+        return BME280_E_COMM_FAIL;
+    }
+    //printf("SPI read fd=%d reg_addr=%#x, len %u, data[0]=%#x\n", id->fd, reg_addr, len, data[0]);
+
+    return BME280_OK;
+}
+
+/*!
  * @brief This function provides the delay for required time (Microseconds) as per the input provided in some of the
  * APIs
  */
@@ -299,6 +436,36 @@ int8_t user_i2c_write(uint8_t reg_addr, const uint8_t *data, uint32_t len, void 
     free(buf);
     */
 
+    return BME280_OK;
+}
+
+/*!
+ * @brief This function for writing the sensor's registers through SPI bus.
+ */
+int8_t user_spi_write(uint8_t reg_addr, const uint8_t *data, uint32_t len, void *intf_ptr)
+{
+    int ret;
+    struct identifier *id;
+    struct spi_ioc_transfer spi_message[2];
+
+    id = (struct identifier *)intf_ptr;
+
+    memset(spi_message, 0, sizeof(spi_message));
+    spi_message[0].tx_buf = (__u64)&reg_addr;
+    spi_message[0].rx_buf = (__u64)0;
+    spi_message[0].len = sizeof(reg_addr);
+
+    spi_message[1].tx_buf = (__u64)data;
+    spi_message[1].rx_buf = (__u64)0;
+    spi_message[1].len = len;
+
+    ret = ioctl(id->fd, SPI_IOC_MESSAGE(2), spi_message);
+    if(ret < 0)
+    {
+        fprintf(stderr, "Failed to red reg_addr=%#x ret=%d, errno %d\n", reg_addr, ret, errno);
+        return BME280_E_COMM_FAIL;
+    }
+    //printf("SPI write fd=%d reg_addr=%#x, len %u\n", id->fd, reg_addr, len);
     return BME280_OK;
 }
 
@@ -358,12 +525,12 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev, struct bme280_data
         return rslt;
     }
 
-    printf("Temperature, Pressure, Humidity\n");
+    //printf("Temperature, Pressure, Humidity\n");
 
     /*Calculate the minimum delay required between consecutive measurement based upon the sensor enabled
      *  and the oversampling configuration. */
     req_delay = bme280_cal_meas_delay(&dev->settings);
-    req_delay = 500000;
+    req_delay = 50;
 
     /* Continuously stream sensor data */
     while (1)
