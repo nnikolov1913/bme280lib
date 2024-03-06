@@ -8,14 +8,12 @@ using namespace druksensor;
 
 i2cBME280::i2cBME280(): mOpened(false), mCtx(nullptr)
 {
-    std::cout << "BME280 I2C constructor" << std::endl;
     mAddress = BME280_I2C_ADDR_PRIM;
     mInterface = "/dev/i2c-1";
 }
 
 i2cBME280::~i2cBME280()
 {
-    std::cout << "BME280 I2C destructor" << std::endl;
     i2cBME280::close();
 }
 

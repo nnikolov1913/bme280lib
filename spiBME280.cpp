@@ -8,13 +8,11 @@ using namespace druksensor;
 
 spiBME280::spiBME280(): mOpened(false), mCtx(nullptr)
 {
-    std::cout << "BME280 SPI constructor" << std::endl;
     mInterface = "/dev/spidev0.0";
 }
 
 spiBME280::~spiBME280()
 {
-    std::cout << "BME280 SPI destructor" << std::endl;
     spiBME280::close();
 }
 
