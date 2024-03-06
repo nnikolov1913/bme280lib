@@ -10,7 +10,6 @@ using namespace druksensor;
 NickSensors::NickSensors(IDrukSensor::SensorType type)
 {
     mExit.store(false);
-    std::cout << "Library constructor, type " << type << std::endl;
     mType = type;
     if (type == IDrukSensor::BME280_INT_I2C) {
         mSensor.reset(new i2cBME280);
@@ -30,8 +29,6 @@ NickSensors::NickSensors(IDrukSensor::SensorType type)
 
 NickSensors::~NickSensors()
 {
-    std::cout << "Library destructor" << std::endl;
-
     exitThread();
 
     mSensor.reset();

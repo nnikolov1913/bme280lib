@@ -249,7 +249,7 @@ int bme280_main(const char* devname, int address, void **ctx)
 
         if ((id.fd = open(devname, O_RDWR)) < 0)
         {
-            fprintf(stderr, "Failed to open the i2c bus %s\n", devname);
+            fprintf(stderr, "Failed to open the device %s\n", devname);
             return BME280_E_DEV_NOT_FOUND;
         }
 
