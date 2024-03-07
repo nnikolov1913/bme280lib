@@ -57,7 +57,7 @@ bool spiBME280::getTemperature(double &t)
 void spiBME280::setParameter(ParameterType paramtype, int param) {
     switch (paramtype) {
         case INTERFACE:
-            mInterface = "/dev/spidev0." + std::to_string(param);
+            mInterface = "/dev/spidev" + std::to_string(param) + ".0";
             std::cout << "BME280 SPI interface set to " << mInterface <<std::endl;
             break;
         case ADDRESS:
