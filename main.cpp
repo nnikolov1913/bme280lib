@@ -133,7 +133,9 @@ int main(int argc, char *argv[])
     }
 
     //Wait for some alarms. At least from fake sensor should come
-    std::this_thread::sleep_for(std::chrono::seconds(60));
+    std::this_thread::sleep_for(std::chrono::seconds(30));
+    //sensor1->closeSensor();
+    std::this_thread::sleep_for(std::chrono::seconds(30));
 
     if (sensor) {
         sensor->removeThreshold(alarmbme280);

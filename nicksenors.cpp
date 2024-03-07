@@ -48,6 +48,8 @@ void NickSensors::closeSensor()
 {
     std::lock_guard<std::mutex> lock(mMutex);
 
+    exitThread();
+
     if (mSensor.get()) {
         mSensor->close();
     }
