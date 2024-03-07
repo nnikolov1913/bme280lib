@@ -234,80 +234,96 @@ int bme280_main(const char* devname, int address, void **ctx)
 {
     struct bme280_dev dev;
     struct identifier id;
-
-    struct bme280_ctx *bme280ctx = malloc(sizeof(*bme280ctx));
-    memset(bme280ctx, 0 , sizeof(*bme280ctx));
     /* Variable to define the result */
     int8_t rslt = BME280_OK;
-    if(bme280ctx->inited == 0)
+
+    id.fd = -1;
+    struct bme280_ctx *bme280ctx = malloc(sizeof(*bme280ctx));
+    if (bme280ctx == NULL) {
+        fprintf(stderr, "No memory for bme280 context\n");
+        rslt = BME280_E_NULL_PTR;
+        goto error;
+    }
+    memset(bme280ctx, 0 , sizeof(*bme280ctx));
+    if (devname == NULL)
     {
-        if (devname == NULL)
-        {
-            fprintf(stderr, "Missing argument for i2c bus.\n");
-            return BME280_E_NULL_PTR;
-        }
+        fprintf(stderr, "Missing argument for i2c bus.\n");
+        rslt = BME280_E_NULL_PTR;
+        goto error;
+    }
 
-        if ((id.fd = open(devname, O_RDWR)) < 0)
-        {
-            fprintf(stderr, "Failed to open the device %s\n", devname);
-            return BME280_E_DEV_NOT_FOUND;
-        }
+    if ((id.fd = open(devname, O_RDWR)) < 0)
+    {
+        fprintf(stderr, "Failed to open the device %s, errno %d\n", devname, errno);
+        rslt = BME280_E_DEV_NOT_FOUND;
+        goto error;
+    }
 
-        if (strstr(devname, "i2c"))
-        {
-            /* Make sure to select BME280_I2C_ADDR_PRIM or BME280_I2C_ADDR_SEC as needed */
-            //id.dev_addr = BME280_I2C_ADDR_PRIM;
-            id.dev_addr = address;
+    if (strstr(devname, "i2c"))
+    {
+        /* Make sure to select BME280_I2C_ADDR_PRIM or BME280_I2C_ADDR_SEC as needed */
+        //id.dev_addr = BME280_I2C_ADDR_PRIM;
+        id.dev_addr = address;
 #ifdef __KERNEL__IFACE
-            if (ioctl(id.fd, I2C_SLAVE, id.dev_addr) < 0)
-            {
-                fprintf(stderr, "Failed to acquire bus access and/or talk to slave.\n");
-                return BME280_E_COMM_FAIL;
-            }
+        if (ioctl(id.fd, I2C_SLAVE, id.dev_addr) < 0)
+        {
+            fprintf(stderr, "Failed to acquire bus access and/or talk to slave.\n");
+            rslt = BME280_E_COMM_FAIL;
+            goto error;
+        }
 #endif
 
-            dev.intf = BME280_I2C_INTF;
-            dev.read = user_i2c_read;
-            dev.write = user_i2c_write;
-        }
-        else if (strstr(devname, "spidev"))
-        {
-            id.dev_addr = 0;
-            dev.intf = BME280_SPI_INTF;
-            dev.read = user_spi_read;
-            dev.write = user_spi_write;
-
-            if (bme280_spi_init(id.fd) != BME280_OK)
-            {
-                fprintf(stderr, "Failed to init spi bus\n");
-                return BME280_E_COMM_FAIL;
-            }
-        }
-        else
-        {
-            fprintf(stderr, "Device %s not supported.\n", devname);
-            return BME280_E_DEV_NOT_FOUND;
-        }
-        dev.delay_us = user_delay_us;
-
-        /* Update interface pointer with the structure that contains both device address and file descriptor */
-        dev.intf_ptr = &id;
-
-        /* Initialize the bme280 */
-        rslt = bme280_init(&dev);
-        if (rslt != BME280_OK)
-        {
-            fprintf(stderr, "Failed to initialize the device (code %+d).\n", rslt);
-            return BME280_E_DEV_NOT_FOUND;
-        }
-        bme280ctx->id = id;
-        bme280ctx->dev = dev;
-        bme280ctx->dev.intf_ptr = &bme280ctx->id;
-        bme280ctx->inited = 1;
+        dev.intf = BME280_I2C_INTF;
+        dev.read = user_i2c_read;
+        dev.write = user_i2c_write;
     }
+    else if (strstr(devname, "spidev"))
+    {
+        id.dev_addr = 0;
+        dev.intf = BME280_SPI_INTF;
+        dev.read = user_spi_read;
+        dev.write = user_spi_write;
+
+        if (bme280_spi_init(id.fd) != BME280_OK)
+        {
+            fprintf(stderr, "Failed to init spi bus\n");
+            rslt = BME280_E_COMM_FAIL;
+            goto error;
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Device %s not supported.\n", devname);
+        rslt = BME280_E_DEV_NOT_FOUND;
+        goto error;
+    }
+    dev.delay_us = user_delay_us;
+
+    /* Update interface pointer with the structure that contains both device address and file descriptor */
+    dev.intf_ptr = &id;
+
+    /* Initialize the bme280 */
+    rslt = bme280_init(&dev);
+    if (rslt != BME280_OK)
+    {
+        fprintf(stderr, "Failed to initialize the device (code %+d).\n", rslt);
+        rslt = BME280_E_DEV_NOT_FOUND;
+        goto error;
+    }
+    bme280ctx->id = id;
+    bme280ctx->dev = dev;
+    bme280ctx->dev.intf_ptr = &bme280ctx->id;
+    bme280ctx->inited = 1;
     *ctx = bme280ctx;
 
     return BME280_OK;
+
+error:
+    if (id.fd >= 0) {
+        close(id.fd);
+    }
+    free(bme280ctx);
+    return rslt;
 }
 
 int bme280_read_data(struct bme280_ctx *bme280ctx, struct bme280_data *comp_data)
