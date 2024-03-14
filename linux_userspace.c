@@ -165,13 +165,14 @@ int8_t user_spi_read(uint8_t reg_addr, uint8_t *data, uint32_t len, void *intf_p
  * @retval BME280_E_NVM_COPY_FAILED - Error: NVM copy failed
  *
  */
-int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev, struct bme280_data *comp_data);
+int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev, struct bme280_data *comp_data, uint32_t req_delay);
 
 struct bme280_ctx
 {
     int inited;
     struct bme280_dev dev;
     struct identifier id;
+    uint32_t req_delay;
 };
 
 //static struct bme280_ctx bme280ctx;
@@ -236,6 +237,8 @@ int bme280_main(const char* devname, int address, void **ctx)
     struct identifier id;
     /* Variable to define the result */
     int8_t rslt = BME280_OK;
+    /* Variable to define the selecting sensors */
+    uint8_t settings_sel = 0;
 
     id.fd = -1;
     struct bme280_ctx *bme280ctx = malloc(sizeof(*bme280ctx));
@@ -310,6 +313,28 @@ int bme280_main(const char* devname, int address, void **ctx)
         rslt = BME280_E_DEV_NOT_FOUND;
         goto error;
     }
+
+    /* Recommended mode of operation: Indoor navigation */
+    dev.settings.osr_h = BME280_OVERSAMPLING_1X;
+    dev.settings.osr_p = BME280_OVERSAMPLING_16X;
+    dev.settings.osr_t = BME280_OVERSAMPLING_2X;
+    dev.settings.filter = BME280_FILTER_COEFF_16;
+
+    settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
+
+    /* Set the sensor settings */
+    rslt = bme280_set_sensor_settings(settings_sel, &dev);
+    if (rslt != BME280_OK)
+    {
+        fprintf(stderr, "Failed to set sensor settings (code %+d).", rslt);
+        goto error;
+    }
+
+    //printf("Temperature, Pressure, Humidity\n");
+
+    /*Calculate the minimum delay required between consecutive measurement based upon the sensor enabled
+     *  and the oversampling configuration. */
+    bme280ctx->req_delay = 1000*bme280_cal_meas_delay(&dev.settings);
     bme280ctx->id = id;
     bme280ctx->dev = dev;
     bme280ctx->dev.intf_ptr = &bme280ctx->id;
@@ -330,7 +355,7 @@ int bme280_read_data(struct bme280_ctx *bme280ctx, struct bme280_data *comp_data
 {
     if (bme280ctx->inited == 0)
         return BME280_E_DEV_NOT_FOUND;
-    int8_t rslt = stream_sensor_data_forced_mode(&bme280ctx->dev, comp_data);
+    int8_t rslt = stream_sensor_data_forced_mode(&bme280ctx->dev, comp_data, bme280ctx->req_delay);
     if (rslt != BME280_OK)
     {
         fprintf(stderr, "Failed to stream sensor data (code %+d).\n", rslt);
@@ -513,40 +538,10 @@ void print_sensor_data(struct bme280_data *comp_data)
 /*!
  * @brief This API reads the sensor temperature, pressure and humidity data in forced mode.
  */
-int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev, struct bme280_data *comp_data)
+int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev, struct bme280_data *comp_data, uint32_t req_delay)
 {
     /* Variable to define the result */
     int8_t rslt = BME280_OK;
-
-    /* Variable to define the selecting sensors */
-    uint8_t settings_sel = 0;
-
-    /* Variable to store minimum wait time between consecutive measurement in force mode */
-    uint32_t req_delay;  
-
-    /* Recommended mode of operation: Indoor navigation */
-    dev->settings.osr_h = BME280_OVERSAMPLING_1X;
-    dev->settings.osr_p = BME280_OVERSAMPLING_16X;
-    dev->settings.osr_t = BME280_OVERSAMPLING_2X;
-    dev->settings.filter = BME280_FILTER_COEFF_16;
-
-    settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
-
-    /* Set the sensor settings */
-    rslt = bme280_set_sensor_settings(settings_sel, dev);
-    if (rslt != BME280_OK)
-    {
-        fprintf(stderr, "Failed to set sensor settings (code %+d).", rslt);
-
-        return rslt;
-    }
-
-    //printf("Temperature, Pressure, Humidity\n");
-
-    /*Calculate the minimum delay required between consecutive measurement based upon the sensor enabled
-     *  and the oversampling configuration. */
-    req_delay = bme280_cal_meas_delay(&dev->settings);
-    req_delay *= 1000;
 
     /* Continuously stream sensor data */
     while (1)
